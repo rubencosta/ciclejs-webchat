@@ -17,5 +17,10 @@
     "html-webpack-plugin": "^1.6.2",
     "webpack": "^1.12.6",
     "webpack-dev-server": "^1.12.1"
+  },
+  "dependencies": {
+    "@cycle/core": "^5.0.1",
+    "@cycle/dom": "^7.1.1",
+    "rx": "^4.0.7"
   }
 }
