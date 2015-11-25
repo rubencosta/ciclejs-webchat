@@ -12,42 +12,6 @@ function ChatListItem(sources) {
   }
 }
 
-function ChatList(sources) {
-  const intent = ({DOM}) => ({
-    changeOpenChat$: DOM
-      .select('a')
-      .events('click')
-      .map(event => {
-        return event.target.getAttribute('href').replace('#/', '')
-      })
-  })
-
-  const actions = intent(sources)
-
-
-  return {
-    DOM: sources.initialModel
-      .combineLatest(
-        actions.changeOpenChat$.startWith(1),
-        (intialModel, openChatId) => {
-          return (
-            <nav>
-              <ul>
-                {intialModel.chats.map(chat => ChatListItem({
-                    props$: Rx.Observable.just({
-                      chat: chat,
-                      selected: openChatId == chat.id,
-                    }),
-                  }).DOM
-                )}
-              </ul>
-            </nav>
-          )
-        }
-      )
-  }
-}
-
 function ChatMessageItem(sources) {
   const view = ({message}) =>
     <div>
@@ -60,57 +24,70 @@ function ChatMessageItem(sources) {
   }
 }
 
-function ChatMessages({initialModel}) {
-  // TODO: change defaultModel to sources
-  return {
-    DOM: initialModel
-      .map(model => model.chats[model.openChatId].messages)
-      .map(messages =>
-          <div>
-            {messages.map(message => ChatMessageItem({
-                props$: Rx.Observable.just({
-                  message: message
-                })
-              }).DOM
-            )}
-          </div>
-        )
-  }
-}
-
 export default sources => {
   const intent = ({DOM, initialModel}) => ({
     changeOpenChat$: DOM
       .select('a')
       .events('click')
       .map(event => {
-        return event.target.getAttribute('href').replace('#/', '')
-      })
+        return parseInt(event.target.getAttribute('href').replace('#/', ''))
+      }),
+    chats$: initialModel.map(model => model.chats)
   })
 
-  const actions = intent(sources)
+  const model = actions => actions.changeOpenChat$
+    .startWith(1)
+    .combineLatest(
+      actions.chats$,
+      (openChatId, chats) => ({
+        chats,
+        openChatId
+      }))
 
-  const chatList = ChatList(sources)
-  const chatMessages = ChatMessages(sources)
-
-  const sinks = {
-    DOM: Rx.Observable
-      .just(<h1>Cicle WebChat</h1>)
-      .combineLatest(
-        chatList.DOM,
-        chatMessages.DOM,
-        (title, chatList, chatMessages) =>
-          <div>
-            {title}
-            <aside>
-              {chatList}
-            </aside>
-            <main>
-              {chatMessages}
-            </main>
-          </div>
-      )
+  const view = state$ => {
+    const title$ = Rx.Observable.just(<h1>Cicle WebChat</h1>)
+    const chatList$ = state$.map(state =>
+      <nav>
+        <ul>
+          {state.chats.map(chat => ChatListItem({
+              props$: Rx.Observable.just({
+                chat: chat,
+                selected: state.openChatId === chat.id,
+              }),
+            }).DOM
+          )}
+        </ul>
+      </nav>
+    )
+    const chatMessages$ = state$.map(state =>
+      <div>
+        {state.chats
+          .filter(chat => state.openChatId === chat.id)
+          .map(chat => chat.messages.map(message => ChatMessageItem({
+              props$: Rx.Observable.just({
+                message: message
+              })
+            }).DOM)
+          )}
+      </div>
+    )
+    return Rx.Observable.combineLatest(
+      title$,
+      chatList$,
+      chatMessages$,
+      (title, chatList, chatMessages) =>
+        <div>
+          {title}
+          <aside>
+            {chatList}
+          </aside>
+          <main>
+            {chatMessages}
+            <input type="text"/>
+          </main>
+        </div>
+    )
   }
 
-  return sinks
+  return {DOM: view(model(intent(sources)))}
 }
