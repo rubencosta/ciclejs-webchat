@@ -25,37 +25,98 @@ function ChatMessageItem(sources) {
 }
 
 export default sources => {
-  const intent = ({DOM, initialModel}) => ({
+  const sourceChatData$ = sources.LocalStorageSource
+    .map(json => JSON.parse(json) || {})
+    .map(chatData => Object.assign({
+      chats: [
+        {
+          id: 1,
+          user: {
+            id: 2,
+            profilePicture: "https://avatars0.githubusercontent.com/u/7922109?:3&:460",
+            name: "Ryan Clark"
+          },
+          messages: [{
+            contents: "Hey!", from: 2, timestamp: 1424469793023
+          },
+            {
+              contents: "He, what's up?", from: 1, timestamp: 1424469794000
+            }]
+        },
+        {
+          id: 2,
+          user: {
+            id: 3,
+            profilePicture: "https://avatars3.githubusercontent.com/u/2955483?:3&:460",
+            name: "Jilles Soeters"
+          },
+          messages: [{
+            contents: "Want a game of ping pong?", from: 3, timestamp: 1424352522000
+          }]
+        },
+        {
+          id: 3,
+          user: {
+            id: 4,
+            profilePicture: "https://avatars1.githubusercontent.com/u/1655968?:3&:460",
+            name: "JTodd Motto"
+          },
+          messages: [{
+            contents: "Please follow me on twitter I'll pay you", from: 4, timestamp: 1424423579000
+          }]
+        }
+      ],
+      openChatId: 1
+    }, chatData))
+
+
+  const intent = ({DOM}) => ({
     changeOpenChat$: DOM
       .select('a')
       .events('click')
-      .map(event => {
-        return parseInt(event.target.getAttribute('href').replace('#/', ''))
-      }),
-    chats$: initialModel.map(model => model.chats)
-  })
-
-  const model = actions => actions.changeOpenChat$
-    .startWith(1)
-    .combineLatest(
-      actions.chats$,
-      (openChatId, chats) => ({
-        chats,
-        openChatId
+      .map(event => parseInt(event.target.getAttribute('href').replace('#/', ''))),
+    newMessage$: DOM
+      .select('input')
+      .events('keydown')
+      .filter(event => event.keyCode === 13)
+      .map(event => ({
+        contents: event.target.value,
+        timestamp: Date.now(),
+        from: 1
       }))
+  })
+  const model = (actions, chatData$) => chatData$
+    .merge(
+      Rx.Observable.merge(
+        actions.changeOpenChat$
+          .map(openChatId => chatData => {
+            chatData.openChatId = openChatId
+            return chatData
+          }),
+        actions.newMessage$
+          .map(newMessage => chatData => {
+            chatData.chats[chatData.openChatId - 1].messages.push(newMessage)
+            return chatData
+          })
+      )
+    )
+    .scan((chatData, modifier) => {
+      return modifier(chatData)
+    })
 
   const view = state$ => {
     const title$ = Rx.Observable.just(<h1>Cicle WebChat</h1>)
     const chatList$ = state$.map(state =>
       <nav>
         <ul>
-          {state.chats.map(chat => ChatListItem({
-              props$: Rx.Observable.just({
-                chat: chat,
-                selected: state.openChatId === chat.id,
-              }),
-            }).DOM
-          )}
+          {state.chats
+            .map(chat => ChatListItem({
+                props$: Rx.Observable.just({
+                  chat: chat,
+                  selected: state.openChatId === chat.id,
+                }),
+              }).DOM
+            )}
         </ul>
       </nav>
     )
@@ -89,5 +150,11 @@ export default sources => {
     )
   }
 
-  return {DOM: view(model(intent(sources)))}
+  const actions = intent(sources)
+  var state$ = model(actions, sourceChatData$)
+
+  return {
+    DOM: view(state$),
+    LocalStorageSink: state$.map(state => JSON.stringify(state))
+  }
 }
