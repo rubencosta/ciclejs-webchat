@@ -6,13 +6,18 @@ import classNames from 'classnames'
 function chatListItem(sources) {
   const view = ({chat, selected}) => {
     const className = classNames(`mdl-navigation__link`, {active: selected})
+    const lastMessage = [...chat.messages].reverse().shift()
     return (
       <a className={className} href={`#/${chat.id}`}>
         <div className="chat-list-item">
           <div className="chat-list-image"
                style={{backgroundImage: `url("${chat.user.profilePicture}")`}}>
           </div>
-          <div className="chat-list-name">{chat.user.name}</div>
+          <div className="chat-list-name">
+            {chat.user.name}
+          </div>
+          <div className="chat-user-list-timestamp">{lastMessage.timestamp}</div>
+          <div className="chat-user-list-message">{lastMessage.contents}</div>
         </div>
       </a>
     )
@@ -116,7 +121,10 @@ export default sources => {
           }),
         actions.newMessage$
           .map(newMessage => chatData => {
-            chatData.chats[chatData.openChatId - 1].messages.push(newMessage)
+            chatData.chats
+              .filter(chat => chat.id === chatData.openChatId)
+              .shift()
+              .messages.push(newMessage)
             return chatData
           })
       )
@@ -131,6 +139,17 @@ export default sources => {
         <span className="mdl-layout-title">Cycle.js Chat</span>
         <nav className="mdl-navigation">
           {state.chats
+            .sort((a, b) => {
+              const lastMessageChatA = [...a.messages].reverse().shift()
+              const lastMessageChatB = [...b.messages].reverse().shift()
+              if (lastMessageChatA.timestamp > lastMessageChatB.timestamp) {
+                return -1
+              }
+              if (lastMessageChatA.timestamp < lastMessageChatB.timestamp) {
+                return 1
+              }
+              return 0
+            })
             .map(chat => chatListItem(
               {
                 props$: Rx.Observable.just({
