@@ -9,8 +9,7 @@ import chat from './chat/chat'
 const main = chat
 
 run(main, {
-  DOM: makeDOMDriver('#app'),
-  LocalStorageSource: makeLocalStorageSourceDriver('webchat-cycle'),
-  LocalStorageSink: makeLocalStorageSinkDriver('webchat-cycle'),
-  hashchange: () => Rx.Observable.fromEvent(window, 'hashchange')
-});
+  DOM: makeDOMDriver(`#app`),
+  LocalStorageSource: makeLocalStorageSourceDriver(`webchat-cycle`),
+  LocalStorageSink: makeLocalStorageSinkDriver(`webchat-cycle`),
+})

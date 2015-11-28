@@ -1,0 +1,6 @@
+{
+  "extends": "eslint-config-cycle",
+  "ecmaFeatures": {
+    "jsx": true
+  }
+}

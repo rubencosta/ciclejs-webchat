@@ -2,17 +2,17 @@
 import {hJSX} from '@cycle/dom'
 import Rx from 'rx'
 
-function ChatListItem(sources) {
+function chatListItem(sources) {
   const view = ({chat, selected}) =>
-    <li style={selected ? {backgroundColor: 'green'} : {}}>
+    <li style={selected ? {backgroundColor: `green`} : {}}>
       <a href={`#/${chat.id}`}>{chat.user.name}</a>
     </li>
   return {
-    DOM: sources.props$.map(props => view(props))
+    DOM: sources.props$.map(props => view(props)),
   }
 }
 
-function ChatMessageItem(sources) {
+function chatMessageItem(sources) {
   const view = ({message}) =>
     <div>
       <p>
@@ -20,7 +20,7 @@ function ChatMessageItem(sources) {
       </p>
     </div>
   return {
-    DOM: sources.props$.map(props => view(props))
+    DOM: sources.props$.map(props => view(props)),
   }
 }
 
@@ -33,57 +33,56 @@ export default sources => {
           id: 1,
           user: {
             id: 2,
-            profilePicture: "https://avatars0.githubusercontent.com/u/7922109?:3&:460",
-            name: "Ryan Clark"
+            profilePicture: `https://avatars0.githubusercontent.com/u/7922109?:3&:460`,
+            name: `Ryan Clark`,
           },
           messages: [{
-            contents: "Hey!", from: 2, timestamp: 1424469793023
+            contents: `Hey!`, from: 2, timestamp: 1424469793023,
           },
             {
-              contents: "He, what's up?", from: 1, timestamp: 1424469794000
-            }]
+              contents: `He, what's up?`, from: 1, timestamp: 1424469794000,
+            }],
         },
         {
           id: 2,
           user: {
             id: 3,
-            profilePicture: "https://avatars3.githubusercontent.com/u/2955483?:3&:460",
-            name: "Jilles Soeters"
+            profilePicture: `https://avatars3.githubusercontent.com/u/2955483?:3&:460`,
+            name: `Jilles Soeters`,
           },
           messages: [{
-            contents: "Want a game of ping pong?", from: 3, timestamp: 1424352522000
-          }]
+            contents: `Want a game of ping pong?`, from: 3, timestamp: 1424352522000,
+          }],
         },
         {
           id: 3,
           user: {
             id: 4,
-            profilePicture: "https://avatars1.githubusercontent.com/u/1655968?:3&:460",
-            name: "JTodd Motto"
+            profilePicture: `https://avatars1.githubusercontent.com/u/1655968?:3&:460`,
+            name: `JTodd Motto`,
           },
           messages: [{
-            contents: "Please follow me on twitter I'll pay you", from: 4, timestamp: 1424423579000
-          }]
-        }
+            contents: `Please follow me on twitter I'll pay you`, from: 4, timestamp: 1424423579000,
+          }],
+        },
       ],
-      openChatId: 1
+      openChatId: 1,
     }, chatData))
-
 
   const intent = ({DOM}) => ({
     changeOpenChat$: DOM
-      .select('a')
-      .events('click')
-      .map(event => parseInt(event.target.getAttribute('href').replace('#/', ''))),
+      .select(`a`)
+      .events(`click`)
+      .map(event => parseInt(event.target.getAttribute(`href`).replace(`#/`, ``))),
     newMessage$: DOM
-      .select('input')
-      .events('keydown')
+      .select(`input`)
+      .events(`keydown`)
       .filter(event => event.keyCode === 13)
       .map(event => ({
         contents: event.target.value,
         timestamp: Date.now(),
-        from: 1
-      }))
+        from: 1,
+      })),
   })
   const model = (actions, chatData$) => chatData$
     .merge(
@@ -105,56 +104,54 @@ export default sources => {
     })
 
   const view = state$ => {
-    const title$ = Rx.Observable.just(<h1>Cicle WebChat</h1>)
-    const chatList$ = state$.map(state =>
+    const renderTitle = () => <h1>Cicle WebChat</h1>
+    const renderMessageInput = () => <input type="text"/>
+    const renderChatList = state =>
       <nav>
         <ul>
           {state.chats
-            .map(chat => ChatListItem({
+            .map(chat => chatListItem(
+              {
                 props$: Rx.Observable.just({
                   chat: chat,
                   selected: state.openChatId === chat.id,
                 }),
-              }).DOM
+              }
+              ).DOM
             )}
         </ul>
       </nav>
-    )
-    const chatMessages$ = state$.map(state =>
-      <div>
-        {state.chats
-          .filter(chat => state.openChatId === chat.id)
-          .map(chat => chat.messages.map(message => ChatMessageItem({
+
+    const renderChatMessages = state =>
+      <main>
+        {
+          state.chats
+            .filter(chat => state.openChatId === chat.id)
+            .map(chat => chat.messages)
+            .shift()
+            .map(message => chatMessageItem({
               props$: Rx.Observable.just({
-                message: message
-              })
+                message: message,
+              }),
             }).DOM)
-          )}
+        }
+      </main>
+
+    return state$.map(state =>
+      <div>
+        {renderTitle()}
+        {renderChatList(state)}
+        {renderChatMessages(state)}
+        {renderMessageInput()}
       </div>
-    )
-    return Rx.Observable.combineLatest(
-      title$,
-      chatList$,
-      chatMessages$,
-      (title, chatList, chatMessages) =>
-        <div>
-          {title}
-          <aside>
-            {chatList}
-          </aside>
-          <main>
-            {chatMessages}
-            <input type="text"/>
-          </main>
-        </div>
     )
   }
 
   const actions = intent(sources)
-  var state$ = model(actions, sourceChatData$)
+  const state$ = model(actions, sourceChatData$)
 
   return {
     DOM: view(state$),
-    LocalStorageSink: state$.map(state => JSON.stringify(state))
+    LocalStorageSink: state$.map(state => JSON.stringify(state)),
   }
 }

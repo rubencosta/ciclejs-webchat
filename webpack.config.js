@@ -11,6 +11,11 @@ module.exports = {
     filename: 'bundle.js'
   },
   module: {
+    preLoaders: [
+      { test: /\.jsx?$/,
+        loader: 'eslint-loader'
+      }
+    ],
     loaders: [
       {test: /\.html/, loader: 'file?name=[name].[ext]'},
       {test: /\.jsx?$/, loader: 'babel', query: {
