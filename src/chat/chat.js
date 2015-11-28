@@ -1,24 +1,36 @@
 /** @jsx hJSX */
 import {hJSX} from '@cycle/dom'
 import Rx from 'rx'
+import classNames from 'classnames'
 
 function chatListItem(sources) {
-  const view = ({chat, selected}) =>
-    <li style={selected ? {backgroundColor: `green`} : {}}>
-      <a href={`#/${chat.id}`}>{chat.user.name}</a>
-    </li>
+  const view = ({chat, selected}) => {
+    const className = classNames(`mdl-navigation`, {active: selected})
+    return (
+      <a className={className} href={`#/${chat.id}`}>
+        <div className="chat-list-item">
+          <div className="chat-list-image"
+               style={{backgroundImage: `url("${chat.user.profilePicture}")`}}>
+          </div>
+          <div className="chat-list-name">{chat.user.name}</div>
+        </div>
+      </a>
+    )
+  }
   return {
     DOM: sources.props$.map(props => view(props)),
   }
 }
 
 function chatMessageItem(sources) {
-  const view = ({message}) =>
-    <div>
-      <p>
-        {message.contents}
-      </p>
-    </div>
+  const view = ({message, isReply}) => {
+    const className = classNames(`chat-message-item`, {'reply-message': isReply})
+    return (
+      <div className={className}>
+        <div className="mdl-shadow--2dp chat-message-item-content">{message.contents}</div>
+      </div>
+    )
+  }
   return {
     DOM: sources.props$.map(props => view(props)),
   }
@@ -37,10 +49,14 @@ export default sources => {
             name: `Ryan Clark`,
           },
           messages: [{
-            contents: `Hey!`, from: 2, timestamp: 1424469793023,
+            contents: `Hey!`,
+            from: 2,
+            timestamp: 1424469793023,
           },
             {
-              contents: `He, what's up?`, from: 1, timestamp: 1424469794000,
+              contents: `He, what's up?`,
+              from: 1,
+              timestamp: 1424469794000,
             }],
         },
         {
@@ -51,7 +67,9 @@ export default sources => {
             name: `Jilles Soeters`,
           },
           messages: [{
-            contents: `Want a game of ping pong?`, from: 3, timestamp: 1424352522000,
+            contents: `Want a game of ping pong?`,
+            from: 3,
+            timestamp: 1424352522000,
           }],
         },
         {
@@ -62,7 +80,9 @@ export default sources => {
             name: `JTodd Motto`,
           },
           messages: [{
-            contents: `Please follow me on twitter I'll pay you`, from: 4, timestamp: 1424423579000,
+            contents: `Please follow me on twitter I'll pay you`,
+            from: 4,
+            timestamp: 1424423579000,
           }],
         },
       ],
@@ -73,7 +93,9 @@ export default sources => {
     changeOpenChat$: DOM
       .select(`a`)
       .events(`click`)
-      .map(event => parseInt(event.target.getAttribute(`href`).replace(`#/`, ``))),
+      .map(event => parseInt(
+        event.currentTarget.getAttribute(`href`).replace(`#/`, ``))
+      ),
     newMessage$: DOM
       .select(`input`)
       .events(`keydown`)
@@ -104,11 +126,11 @@ export default sources => {
     })
 
   const view = state$ => {
-    const renderTitle = () => <h1>Cicle WebChat</h1>
     const renderMessageInput = () => <input type="text"/>
     const renderChatList = state =>
-      <nav>
-        <ul>
+      <div className="mdl-layout__drawer">
+        <span className="mdl-layout-title">Cycle.js WebChat</span>
+        <nav className="mdl-navigation">
           {state.chats
             .map(chat => chatListItem(
               {
@@ -119,30 +141,33 @@ export default sources => {
               }
               ).DOM
             )}
-        </ul>
-      </nav>
-
+        </nav>
+      </div>
     const renderChatMessages = state =>
-      <main>
-        {
-          state.chats
-            .filter(chat => state.openChatId === chat.id)
-            .map(chat => chat.messages)
-            .shift()
-            .map(message => chatMessageItem({
-              props$: Rx.Observable.just({
-                message: message,
-              }),
-            }).DOM)
-        }
+      <main className="mdl-layout__content">
+        <div className="page-content">
+          {
+            state.chats
+              .filter(chat => state.openChatId === chat.id)
+              .map(chat => chat.messages)
+              .shift()
+              .map(message => chatMessageItem({
+                props$: Rx.Observable.just({
+                  message: message,
+                  isReply: message.from === 1,
+                }),
+              }).DOM)
+          }
+        </div>
+        <div className="chat-reply-box">
+          <input type="text" placeholder="Type here to reply..."/>
+        </div>
       </main>
 
     return state$.map(state =>
-      <div>
-        {renderTitle()}
+      <div className="mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--overlay-drawer-button">
         {renderChatList(state)}
         {renderChatMessages(state)}
-        {renderMessageInput()}
       </div>
     )
   }
