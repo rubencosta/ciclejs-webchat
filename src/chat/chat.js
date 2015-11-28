@@ -178,7 +178,7 @@ export default sources => {
           }
         </div>
         <div className="chat-reply-box">
-          <input type="text" placeholder="Type here and press enter to reply..."/>
+          <input type="text" value="" placeholder="Type here and press enter to reply..."/>
         </div>
       </main>
 
