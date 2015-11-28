@@ -104,7 +104,7 @@ export default sources => {
     newMessage$: DOM
       .select(`input`)
       .events(`keydown`)
-      .filter(event => event.keyCode === 13)
+      .filter(event => event.keyCode === 13 && event.target.value !== ``)
       .map(event => ({
         contents: event.target.value,
         timestamp: Date.now(),
