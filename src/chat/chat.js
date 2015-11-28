@@ -5,7 +5,7 @@ import classNames from 'classnames'
 
 function chatListItem(sources) {
   const view = ({chat, selected}) => {
-    const className = classNames(`mdl-navigation`, {active: selected})
+    const className = classNames(`mdl-navigation__link`, {active: selected})
     return (
       <a className={className} href={`#/${chat.id}`}>
         <div className="chat-list-item">
@@ -126,10 +126,9 @@ export default sources => {
     })
 
   const view = state$ => {
-    const renderMessageInput = () => <input type="text"/>
     const renderChatList = state =>
       <div className="mdl-layout__drawer">
-        <span className="mdl-layout-title">Cycle.js WebChat</span>
+        <span className="mdl-layout-title">Cycle.js Chat</span>
         <nav className="mdl-navigation">
           {state.chats
             .map(chat => chatListItem(
@@ -160,12 +159,12 @@ export default sources => {
           }
         </div>
         <div className="chat-reply-box">
-          <input type="text" placeholder="Type here to reply..."/>
+          <input type="text" placeholder="Type here and press enter to reply..."/>
         </div>
       </main>
 
     return state$.map(state =>
-      <div className="mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--overlay-drawer-button">
+      <div className="mdl-layout mdl-js-layout mdl-layout--fixed-drawer">
         {renderChatList(state)}
         {renderChatMessages(state)}
       </div>
