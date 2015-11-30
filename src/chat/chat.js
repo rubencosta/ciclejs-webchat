@@ -3,6 +3,8 @@ import {hJSX} from '@cycle/dom'
 import Rx from 'rx'
 import classNames from 'classnames'
 
+import {getShortDate} from '../shared/prettyDates'
+
 function chatListItem(sources) {
   const view = ({chat, selected}) => {
     const className = classNames(`mdl-navigation__link`, {active: selected})
@@ -16,7 +18,7 @@ function chatListItem(sources) {
           <div className="chat-list-name">
             {chat.user.name}
           </div>
-          <div className="chat-user-list-timestamp">{lastMessage.timestamp}</div>
+          <div className="chat-user-list-timestamp">{getShortDate(lastMessage.timestamp)}</div>
           <div className="chat-user-list-message">{lastMessage.contents}</div>
         </div>
       </a>
@@ -161,31 +163,29 @@ export default sources => {
             )}
         </nav>
       </div>
-    const renderChatMessages = state =>
-      <main className="mdl-layout__content">
-        <div className="page-content">
-          {
-            state.chats
-              .filter(chat => state.openChatId === chat.id)
-              .map(chat => chat.messages)
-              .shift()
-              .map(message => chatMessageItem({
-                props$: Rx.Observable.just({
-                  message: message,
-                  isReply: message.from === 1,
-                }),
-              }).DOM)
-          }
-        </div>
-        <div className="chat-reply-box">
-          <input type="text" value="" placeholder="Type here and press enter to reply..."/>
-        </div>
-      </main>
+    const renderChatMessages = state => state.chats
+      .filter(chat => state.openChatId === chat.id)
+      .map(chat => chat.messages)
+      .shift()
+      .map(message => chatMessageItem({
+        props$: Rx.Observable.just({
+          message: message,
+          isReply: message.from === 1,
+        }),
+      }).DOM)
+
 
     return state$.map(state =>
       <div className="mdl-layout mdl-js-layout mdl-layout--fixed-drawer">
         {renderChatList(state)}
-        {renderChatMessages(state)}
+        <main className="mdl-layout__content">
+          <div className="page-content">
+            {renderChatMessages(state)}
+          </div>
+          <div className="chat-reply-box">
+            <input type="text" placeholder="Type here and press enter to reply..."/>
+          </div>
+        </main>
       </div>
     )
   }
