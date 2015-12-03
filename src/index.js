@@ -1,4 +1,3 @@
-/** @jsx hJSX */
 require('./app.styl')
 import {run} from '@cycle/core'
 import {makeDOMDriver} from '@cycle/dom'
