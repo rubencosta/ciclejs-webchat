@@ -5,7 +5,7 @@ import classNames from 'classnames'
 
 import {getShortDate} from '../shared/prettyDates'
 
-function chatListItem(sources) {
+const chatListItem = sources => {
   const view = ({chat, selected}) => {
     const className = classNames(`mdl-navigation__link`, {active: selected})
     const lastMessage = [...chat.messages].reverse().shift()
@@ -29,7 +29,7 @@ function chatListItem(sources) {
   }
 }
 
-function chatMessageItem(sources) {
+const chatMessageItem = sources => {
   const view = ({message, isReply}) => {
     const className = classNames(`chat-message-item`, {'reply-message': isReply})
     return (
